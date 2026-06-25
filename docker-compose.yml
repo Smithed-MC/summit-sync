@@ -1,0 +1,76 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: summit-sync-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker/redis/data:/data
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: summit-sync-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: summit_sync
+      POSTGRES_USER: summit_sync
+      POSTGRES_PASSWORD: summit_sync_pass
+    volumes:
+      - ./docker/postgres/data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  mc-server-1:
+    image: itzg/minecraft-server:java25
+    container_name: mc-server-1
+    ports:
+      - "25565:25565"
+      - "5005:5005"
+    environment:
+      EULA: "TRUE"
+      TYPE: "FABRIC"
+      VERSION: "26.2"
+      FABRIC_LOADER_VERSION: "0.19.3"
+      SEED: "summit-sync-seed"
+      MEMORY: "1G"
+      JVM_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+      REDIS_URL: "redis://redis:6379"
+    volumes:
+      - ./docker/server-1/data:/data
+#      - ./docker/shared/server.properties:/data/server.properties
+      - ./docker/shared/ops.json:/data/ops.json
+      - ./docker/shared/whitelist.json:/data/whitelist.json
+      - ./docker/mods:/data/mods:ro
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  mc-server-2:
+    image: itzg/minecraft-server:java25
+    container_name: mc-server-2
+    ports:
+      - "25566:25565"
+      - "5006:5006"
+    environment:
+      EULA: "TRUE"
+      TYPE: "FABRIC"
+      VERSION: "26.2"
+      FABRIC_LOADER_VERSION: "0.19.3"
+      SEED: "summit-sync-seed"
+      MEMORY: "1G"
+      JVM_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
+      REDIS_URL: "redis://redis:6379"
+    volumes:
+      - ./docker/server-2/data:/data
+#      - ./docker/shared/server.properties:/data/server.properties
+      - ./docker/shared/ops.json:/data/ops.json
+      - ./docker/shared/whitelist.json:/data/whitelist.json
+      - ./docker/mods:/data/mods:ro
+
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
