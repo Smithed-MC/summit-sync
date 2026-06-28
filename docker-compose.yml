@@ -36,12 +36,16 @@ services:
       MEMORY: "1G"
       JVM_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       REDIS_URL: "redis://redis:6379"
+      POSTGRES_URL: "jdbc:postgresql://postgres:5432/summit_sync"
+      POSTGRES_USER: "summit_sync"
+      POSTGRES_PASSWORD: "summit_sync_pass"
+      PAUSE_WHEN_EMPTY_SECONDS: "-1"
     volumes:
       - ./docker/server-1/data:/data
-#      - ./docker/shared/server.properties:/data/server.properties
       - ./docker/shared/ops.json:/data/ops.json
       - ./docker/shared/whitelist.json:/data/whitelist.json
       - ./docker/mods:/data/mods:ro
+      - ./docker/shared/datapacks:/data/world/datapacks
     depends_on:
       - redis
       - postgres
@@ -62,13 +66,16 @@ services:
       MEMORY: "1G"
       JVM_OPTS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
       REDIS_URL: "redis://redis:6379"
+      POSTGRES_URL: "jdbc:postgresql://postgres:5432/summit_sync"
+      POSTGRES_USER: "summit_sync"
+      POSTGRES_PASSWORD: "summit_sync_pass"
+      PAUSE_WHEN_EMPTY_SECONDS: "-1"
     volumes:
       - ./docker/server-2/data:/data
-#      - ./docker/shared/server.properties:/data/server.properties
       - ./docker/shared/ops.json:/data/ops.json
       - ./docker/shared/whitelist.json:/data/whitelist.json
       - ./docker/mods:/data/mods:ro
-
+      - ./docker/shared/datapacks:/data/world/datapacks
     depends_on:
       - redis
       - postgres

@@ -1,4 +1,4 @@
-package net.smithed.summitsync;
+package net.smithed.summitsync.syncable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +11,11 @@ public abstract class Syncable {
 	}
 
 	public String getKey(ServerPlayer player) {
-		return "player:" + keyPrefix + ":" + player.getStringUUID();
+		return getKey(player.getStringUUID());
+	}
+
+	public String getKey(String uuid) {
+		return "player:" + keyPrefix + ":" + uuid;
 	}
 
 	public abstract void onJoin(ServerPlayer player, CompoundTag tag);

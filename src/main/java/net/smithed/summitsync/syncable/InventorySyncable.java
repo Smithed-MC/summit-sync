@@ -1,9 +1,7 @@
-package net.smithed.summitsync;
+package net.smithed.summitsync.syncable;
 
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
-import net.minecraft.network.protocol.game.ClientboundSetPlayerInventoryPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ItemStackWithSlot;

@@ -23,6 +23,8 @@ loom {
 			sourceSet sourceSets.main
 		}
 	}
+
+	accessWidenerPath = file("src/main/resources/summit-sync.classTweaker")
 }
 
 configurations {
@@ -45,6 +47,9 @@ dependencies {
 
 	implementation "io.github.cdimascio:dotenv-java:${project.dotenv_version}"
 	includeTransitive "io.github.cdimascio:dotenv-java:${project.dotenv_version}"
+
+	implementation "org.postgresql:postgresql:${project.postgres_version}"
+	includeTransitive "org.postgresql:postgresql:${project.postgres_version}"
 }
 
 afterEvaluate {
@@ -111,6 +116,10 @@ afterEvaluate {
 		rename { 'summit-sync.jar' }
 	}
 }
+
+
+
+
 
 
 

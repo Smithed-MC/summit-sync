@@ -1,15 +1,11 @@
-package net.smithed.summitsync;
+package net.smithed.summitsync.syncable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ItemStackWithSlot;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static net.smithed.summitsync.SummitSync.LOGGER;
 

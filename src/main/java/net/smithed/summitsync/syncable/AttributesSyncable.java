@@ -1,4 +1,4 @@
-package net.smithed.summitsync;
+package net.smithed.summitsync.syncable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
