@@ -61,6 +61,9 @@ public class SummitSync implements ModInitializer {
         // Register player listeners
         PlayerSyncListener.register(SYNCABLES);
 
+        // Register chat listener
+        ChatSyncManager.register();
+
         // Register commands
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             SyncCommand.register(dispatcher, SYNCABLES);

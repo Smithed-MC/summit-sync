@@ -2,17 +2,11 @@ package net.smithed.summitsync;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
 import java.util.HashSet;
@@ -21,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class SyncSettingsManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger("summit-sync-settings");
     private static final Gson GSON = new com.google.gson.GsonBuilder()
         .registerTypeAdapter(Identifier.class, new com.google.gson.TypeAdapter<Identifier>() {
             @Override
@@ -63,21 +56,21 @@ public class SyncSettingsManager {
                         if (data != null) {
                             if (data.scores != null) {
                                 SCORES_TO_SYNC.addAll(data.scores);
-                                LOGGER.info("Loaded {} scoreboard objectives to sync from {}", data.scores.size(), id);
+                                SummitSync.LOGGER.info("Loaded {} scoreboard objectives to sync from {}", data.scores.size(), id);
                             }
                             if (data.databases != null) {
                                 synchronized (DATABASES_TO_SYNC) {
                                     DATABASES_TO_SYNC.addAll(data.databases);
                                 }
-                                LOGGER.info("Loaded {} command databases to sync from {}", data.databases.size(), id);
+                                SummitSync.LOGGER.info("Loaded {} command databases to sync from {}", data.databases.size(), id);
                             }
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Failed to parse sync settings from " + id, e);
+                        SummitSync.LOGGER.error("Failed to parse sync settings from " + id, e);
                     }
                 }
-                LOGGER.info("Total scoreboard objectives registered for sync: {}", SCORES_TO_SYNC.size());
-                LOGGER.info("Total command databases registered for sync: {}", DATABASES_TO_SYNC.size());
+                SummitSync.LOGGER.info("Total scoreboard objectives registered for sync: {}", SCORES_TO_SYNC.size());
+                SummitSync.LOGGER.info("Total command databases registered for sync: {}", DATABASES_TO_SYNC.size());
             }
         });
     }

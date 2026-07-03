@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FunctionExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger("summit-sync-function-executor");
-
     public static void invokeFunctionEvent(ServerPlayer player, CompoundTag args, Identifier tag) {
         var server = player.level().getServer();
         var functions = server.getFunctions();
@@ -38,9 +36,9 @@ public class FunctionExecutor {
             InstantiatedFunction<CommandSourceStack> function = functionIn.instantiate(arguments, dispatcher);
             Commands.executeCommandInContext(sender, context -> ExecutionContext.queueInitialFunctionCall(context, function, sender, CommandResultCallback.EMPTY));
         } catch (FunctionInstantiationException e) {
-            LOGGER.error("Failed to instantiate player event function {}\n{}", functionIn.id(), e);
+            SummitSync.LOGGER.error("Failed to instantiate player event function {}\n{}", functionIn.id(), e);
         } catch (Exception e) {
-            LOGGER.warn("Failed to execute function {}", functionIn.id(), e);
+            SummitSync.LOGGER.warn("Failed to execute function {}", functionIn.id(), e);
         } finally {
             profiler.pop();
         }

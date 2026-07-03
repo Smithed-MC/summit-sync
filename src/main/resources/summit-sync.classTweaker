@@ -1,3 +1,4 @@
 classTweaker v1 official
 
 accessible method net/minecraft/world/entity/LivingEntity updateEffectVisibility ()V
+accessible field net/minecraft/world/entity/LivingEntity equipment Lnet/minecraft/world/entity/EntityEquipment;

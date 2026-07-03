@@ -124,21 +124,29 @@ public class DatabaseSyncManager {
                                 if (SummitSync.SERVER_ID.equals(sender)) {
                                     return;
                                 }
-                                String dbKey = msg.getString("key");
-                                String uuid = msg.getString("uuid");
-                                String dataStr = msg.getString("data");
 
                                 var server = SummitSync.getServer();
-                                if (server != null) {
+                                if (server == null) {
+                                    return;
+                                }
+
+                                if ("summit-sync:chat-message".equals(channel)) {
+                                    server.execute(() -> {
+                                        ChatSyncManager.handleIncomingChatMessage(server, msg);
+                                    });
+                                } else if ("summit-sync:database-update".equals(channel)) {
+                                    String dbKey = msg.getString("key");
+                                    String uuid = msg.getString("uuid");
+                                    String dataStr = msg.getString("data");
                                     server.execute(() -> {
                                         updateLocalStorageAndSync(server, dbKey, uuid, dataStr);
                                     });
                                 }
                             } catch (Exception e) {
-                                SummitSync.LOGGER.error("Failed to handle Redis pub/sub message", e);
+                                SummitSync.LOGGER.error("Failed to handle Redis pub/sub message on channel: " + channel, e);
                             }
                         }
-                    }, "summit-sync:database-update");
+                    }, "summit-sync:database-update", "summit-sync:chat-message");
                 } catch (Exception e) {
                     SummitSync.LOGGER.error("Redis subscription failed, retrying in 5 seconds...", e);
                     try {
