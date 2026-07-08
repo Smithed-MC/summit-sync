@@ -38,6 +38,10 @@ public class PlayerSyncListener {
 
         ServerPlayerEvents.LEAVE.register((player) -> {
             for (Syncable syncable : syncables) {
+                var args = new CompoundTag();
+                args.putString("uuid", player.getStringUUID());
+                FunctionExecutor.invokeFunctionEvent(player, args, PLAYER_LEAVE);
+
                 try {
                     CompoundTag tag = new CompoundTag();
                     syncable.onLeave(player, tag);
@@ -47,10 +51,6 @@ public class PlayerSyncListener {
                 } catch (Exception exc) {
                     SummitSync.LOGGER.error("Failed to save {} for player {}", syncable.keyPrefix, player.getScoreboardName(), exc);
                 }
-
-                var args = new CompoundTag();
-                args.putString("uuid", player.getStringUUID());
-                FunctionExecutor.invokeFunctionEvent(player, args, PLAYER_LEAVE);
             }
         });
     }
