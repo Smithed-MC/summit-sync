@@ -1,5 +1,6 @@
 package net.smithed.summitsync;
 
+import net.minecraft.commands.functions.CommandFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.TagParser;
@@ -12,17 +13,19 @@ import redis.clients.jedis.JedisPubSub;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class DatabaseSyncManager {
+    private static ConcurrentLinkedDeque<Runnable> syncQueue = new ConcurrentLinkedDeque<>();
+
     public static void tickDatabases(MinecraftServer server) {
         List<SyncSettingsManager.DatabaseSettings> databases = SyncSettingsManager.getDatabasesToSync();
         for (SyncSettingsManager.DatabaseSettings dbSettings : databases) {
             Identifier dbKey = dbSettings.key;
             try {
                 var storage = server.getCommandStorage();
-                Identifier storageId = dbKey;
-                CompoundTag rootTag = storage.get(storageId);
-                if (rootTag == null || rootTag.isEmpty()) continue;
+                CompoundTag rootTag = storage.get(dbKey);
+                if (rootTag.isEmpty()) continue;
 
                 CompoundTag dirtyTag = rootTag.getCompound("dirty").orElse(null);
                 if (dirtyTag == null || dirtyTag.isEmpty()) continue;
@@ -53,10 +56,14 @@ public class DatabaseSyncManager {
 
                 // Clear the dirty list
                 rootTag.put("dirty", new CompoundTag());
-                storage.set(storageId, rootTag);
+                storage.set(dbKey, rootTag);
             } catch (Exception e) {
                 SummitSync.LOGGER.error("Error ticking database {}", dbKey.toString(), e);
             }
+        }
+
+        while (!syncQueue.isEmpty()) {
+            syncQueue.pop().run();
         }
     }
 
@@ -68,11 +75,7 @@ public class DatabaseSyncManager {
                 Map<String, String> dbData = PostgresManager.getLatestDataForDatabase(dbKey.toString());
                 if (!dbData.isEmpty()) {
                     var storage = server.getCommandStorage();
-                    Identifier storageId = dbKey;
-                    CompoundTag rootTag = storage.get(storageId);
-                    if (rootTag == null) {
-                        rootTag = new CompoundTag();
-                    }
+                    CompoundTag rootTag = storage.get(dbKey);
                     CompoundTag dbTag = rootTag.getCompound("database").orElseGet(CompoundTag::new);
                     ListTag keysList = rootTag.getList("keys").orElseGet(ListTag::new);
 
@@ -102,8 +105,20 @@ public class DatabaseSyncManager {
                     }
                     rootTag.put("database", dbTag);
                     rootTag.put("keys", keysList);
-                    storage.set(storageId, rootTag);
+                    storage.set(dbKey, rootTag);
                     SummitSync.LOGGER.info("Loaded {} database entries from Postgres for key {}", dbData.size(), dbKey.toString());
+
+                    if (dbSettings.onInitialize != null) {
+                        server.getFunctions().get(dbSettings.onInitialize).ifPresent(
+                                (func) ->
+                                        FunctionExecutor.execute(
+                                                func,
+                                                server.createCommandSourceStack(),
+                                                server.getCommands().getDispatcher(),
+                                                new CompoundTag()
+                                        )
+                        );
+                    }
                 }
             } catch (Exception e) {
                 SummitSync.LOGGER.error("Failed to load database {} from Postgres on startup", dbKey.toString(), e);
@@ -204,7 +219,14 @@ public class DatabaseSyncManager {
                         var args = new CompoundTag();
                         args.putString("uuid", uuid);
 
-                        FunctionExecutor.execute(func, server.createCommandSourceStack(), server.getCommands().getDispatcher(), args);
+                        syncQueue.push(() ->
+                                FunctionExecutor.execute(
+                                        func,
+                                        server.createCommandSourceStack(),
+                                        server.getCommands().getDispatcher(),
+                                        args
+                                )
+                        );
                     }
                 }
             }

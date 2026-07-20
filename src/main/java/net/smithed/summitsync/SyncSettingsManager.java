@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 
 import java.io.Reader;
@@ -41,38 +42,7 @@ public class SyncSettingsManager {
     private static final List<DatabaseSettings> DATABASES_TO_SYNC = new java.util.ArrayList<>();
 
     public static void register() {
-        ResourceLoader.get(PackType.SERVER_DATA).registerReloadListener(SummitSync.id("sync-settings"), (ResourceManagerReloadListener) manager -> {
-            synchronized (SCORES_TO_SYNC) {
-                SCORES_TO_SYNC.clear();
-                synchronized (DATABASES_TO_SYNC) {
-                    DATABASES_TO_SYNC.clear();
-                }
-                Map<Identifier, Resource> resources = manager.listResources("sync_settings", path -> path.getPath().endsWith(".json"));
-                for (Map.Entry<Identifier, Resource> entry : resources.entrySet()) {
-                    Identifier id = entry.getKey();
-                    Resource resource = entry.getValue();
-                    try (Reader reader = resource.openAsReader()) {
-                        SyncSettingsData data = GSON.fromJson(reader, SyncSettingsData.class);
-                        if (data != null) {
-                            if (data.scores != null) {
-                                SCORES_TO_SYNC.addAll(data.scores);
-                                SummitSync.LOGGER.info("Loaded {} scoreboard objectives to sync from {}", data.scores.size(), id);
-                            }
-                            if (data.databases != null) {
-                                synchronized (DATABASES_TO_SYNC) {
-                                    DATABASES_TO_SYNC.addAll(data.databases);
-                                }
-                                SummitSync.LOGGER.info("Loaded {} command databases to sync from {}", data.databases.size(), id);
-                            }
-                        }
-                    } catch (Exception e) {
-                        SummitSync.LOGGER.error("Failed to parse sync settings from " + id, e);
-                    }
-                }
-                SummitSync.LOGGER.info("Total scoreboard objectives registered for sync: {}", SCORES_TO_SYNC.size());
-                SummitSync.LOGGER.info("Total command databases registered for sync: {}", DATABASES_TO_SYNC.size());
-            }
-        });
+        ResourceLoader.get(PackType.SERVER_DATA).registerReloadListener(SummitSync.id("sync_setting"), (ResourceManagerReloadListener) SyncSettingsManager::onResourceManagerReload);
     }
 
     public static Set<String> getScoresToSync() {
@@ -87,11 +57,46 @@ public class SyncSettingsManager {
         }
     }
 
+    private static void onResourceManagerReload(ResourceManager manager) {
+        synchronized (SCORES_TO_SYNC) {
+            SCORES_TO_SYNC.clear();
+            synchronized (DATABASES_TO_SYNC) {
+                DATABASES_TO_SYNC.clear();
+            }
+            Map<Identifier, Resource> resources = manager.listResources("sync_setting", path -> path.getPath().endsWith(".json"));
+            for (Map.Entry<Identifier, Resource> entry : resources.entrySet()) {
+                Identifier id = entry.getKey();
+                Resource resource = entry.getValue();
+                try (Reader reader = resource.openAsReader()) {
+                    SyncSettingsData data = GSON.fromJson(reader, SyncSettingsData.class);
+                    if (data != null) {
+                        if (data.scores != null) {
+                            SCORES_TO_SYNC.addAll(data.scores);
+                            SummitSync.LOGGER.info("Loaded {} scoreboard objectives to sync from {}", data.scores.size(), id);
+                        }
+                        if (data.databases != null) {
+                            synchronized (DATABASES_TO_SYNC) {
+                                DATABASES_TO_SYNC.addAll(data.databases);
+                            }
+                            SummitSync.LOGGER.info("Loaded {} command databases to sync from {}", data.databases.size(), id);
+                        }
+                    }
+                } catch (Exception e) {
+                    SummitSync.LOGGER.error("Failed to parse sync settings from " + id, e);
+                }
+            }
+            SummitSync.LOGGER.info("Total scoreboard objectives registered for sync: {}", SCORES_TO_SYNC.size());
+            SummitSync.LOGGER.info("Total command databases registered for sync: {}", DATABASES_TO_SYNC.size());
+        }
+    }
+
     public static class DatabaseSettings {
         @SerializedName("key")
         public Identifier key;
         @SerializedName("on_sync")
         public Identifier onSync;
+        @SerializedName("on_initialize")
+        public Identifier onInitialize;
     }
 
     private static class SyncSettingsData {
